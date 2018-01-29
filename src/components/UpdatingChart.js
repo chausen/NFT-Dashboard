@@ -36,33 +36,36 @@ class UpdatingChart extends Component {
     fetch(this.props.endpoint + this.state.lastTimestamp)
       .then((response) => {                
         response.json().then((json) => {
-            if (isEmptyObject(json) || !Array.isArray(json)) return;
-            console.log(JSON.stringify(json));            
-            this.setState((prevState, props) => ({
-                chartData: prevState.chartData.labels.concat(json.map((log) => log.timestamp)),  
-                chartData: prevState.chartData.datasets[1].data.concat(json.map((log) => log.aTemp)),
+            if (isEmptyObject(json) || !Array.isArray(json)) return;     
+            var newChartData = {...this.state.chartData};  
+            json.forEach((log) => {
+                newChartData.labels.push(log.timestamp);
+                newChartData.datasets[0].data.push(log.aTemp);
+            });                      
+            this.setState({                
+                chartData: newChartData,                
                 lastTimestamp: moment().format(timestampFormat)
-            }));
+            });
         });                
       });
   }
 
   componentDidMount() {    
     const startTimestamp = moment().subtract(30, 'minutes');
-    // fetch(this.props.endpoint + startTimestamp.format(timestampFormat))
-    //     .then((response) => {            
-    //         console.log(JSON.stringify(response));                        
-    //         response.json().then((json) => {
-    //             if (isEmptyObject(json) || !Array.isArray(json)) return;
-    //             console.log(JSON.stringify(json));            
-    //             var newChartData = this.state.chartData;
-    //             newChartData.datasets[1].data = json.map((log) => log.aTemp);
-    //             this.setState({
-    //                 labels: json.map((log) => log.timestamp),
-    //                 chartData: newChartData
-    //             });
-    //         })            
-    //     });    
+    fetch(this.props.endpoint + startTimestamp.format(timestampFormat))
+        .then((response) => {                        
+            response.json().then((json) => {
+                if (isEmptyObject(json) || !Array.isArray(json)) return;                
+                console.log(this.state.chartData);
+                var newChartData = {...this.state.chartData};
+                newChartData.labels = json.map((log) => log.timestamp);
+                newChartData.datasets[0].data = json.map((log) => log.aTemp);
+                this.setState({
+                    labels: json.map((log) => log.timestamp),
+                    chartData: newChartData
+                });
+            })            
+        });    
     this.interval = setInterval(this.updateChart, 10000);
   }
       
